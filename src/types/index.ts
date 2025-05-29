@@ -1,5 +1,6 @@
 export interface KeyMapping {
   note: string;
-  key: string;
-  sharp: { note: string; key: string } | null;
+  code: string;
+  label: string;
+  sharp: { note: string; code: string; label: string } | null;
 }
