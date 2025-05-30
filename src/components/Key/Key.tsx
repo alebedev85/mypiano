@@ -1,27 +1,25 @@
+import { playNote } from "../../utils/soundManager";
 import styles from "./Key.module.scss";
 
 interface KeyProps {
   note: string;
   keyChar: string;
-  octave: number;
   isSharp: boolean;
-  active?: boolean; // новый пропс для подсветки
-  onMouseDown?: () => void; // прокидываем обработчики мыши
+  active?: boolean;
+  onMouseDown?: () => void;
   onMouseUp?: () => void;
 }
 
 const Key = ({
   note,
   keyChar,
-  octave,
   isSharp,
   active = false,
   onMouseDown,
   onMouseUp,
 }: KeyProps) => {
-  const handleClick = () => {
-    const audio = new Audio(`/assets/sounds/${note}${octave}.mp3`);
-    audio.play();
+  const handlePlay = () => {
+    playNote(note);
   };
 
   return (
@@ -29,14 +27,17 @@ const Key = ({
       className={`${styles.key} ${isSharp ? styles.sharp : styles.natural} ${
         active ? styles.active : ""
       }`}
-      onClick={handleClick}
-      onMouseDown={onMouseDown}
+      onClick={handlePlay}
+      onMouseDown={() => {
+        onMouseDown?.();
+        handlePlay();
+      }}
       onMouseUp={onMouseUp}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
-          handleClick();
+          handlePlay();
           e.preventDefault();
         }
       }}

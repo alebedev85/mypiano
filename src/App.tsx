@@ -11,7 +11,7 @@ const App = () => {
       <h1 className={styles.title}>🎹Виртуальное пианино</h1>
       <OctaveSelector currentOctave={octave} onChange={setOctave} />
       <div className={styles.pianoContainer}>
-        <Piano octave={octave} />
+        <Piano />
       </div>
     </div>
   );

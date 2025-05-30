@@ -1,30 +1,42 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { keyMapping } from "../../utils/keyMappings";
+import { playNote } from "../../utils/soundManager";
 import Key from "../Key/Key";
 import styles from "./Piano.module.scss";
 
-interface PianoProps {
-  octave: number;
-}
-
-const Piano = ({ octave }: PianoProps) => {
+const Piano = () => {
   const [activeNotes, setActiveNotes] = useState<string[]>([]);
+  const activeNotesRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    activeNotesRef.current = activeNotes;
+  }, [activeNotes]);
+
+  const addNote = (note: string) => {
+    // console.log(note);
+    if (!activeNotesRef.current.includes(note)) {
+      setActiveNotes((prev) => [...prev, note]);
+      playNote(note);
+    }
+  };
+
+  const removeNote = (note: string) => {
+    setActiveNotes((prev) => prev.filter((n) => n !== note));
+  };
 
   const handleKeyDown = (event: KeyboardEvent) => {
     const code = event.code;
 
-    // Проверка обычных клавиш
     const normalNote = keyMapping.find((k) => k.code === code);
-    if (normalNote && !activeNotes.includes(normalNote.note)) {
-      setActiveNotes((prev) => [...prev, normalNote.note]);
+    if (normalNote) {
+      addNote(normalNote.note);
       event.preventDefault();
       return;
     }
 
-    // Проверка диезов
     const sharpNote = keyMapping.find((k) => k.sharp?.code === code);
-    if (sharpNote?.sharp && !activeNotes.includes(sharpNote.sharp.note)) {
-      setActiveNotes((prev) => [...prev, sharpNote.sharp!.note]);
+    if (sharpNote?.sharp) {
+      addNote(sharpNote.sharp.note);
       event.preventDefault();
     }
   };
@@ -32,18 +44,16 @@ const Piano = ({ octave }: PianoProps) => {
   const handleKeyUp = (event: KeyboardEvent) => {
     const code = event.code;
 
-    // Обычная нота
     const normalNote = keyMapping.find((k) => k.code === code);
     if (normalNote) {
-      setActiveNotes((prev) => prev.filter((n) => n !== normalNote.note));
+      removeNote(normalNote.note);
       event.preventDefault();
       return;
     }
 
-    // Диез
     const sharpNote = keyMapping.find((k) => k.sharp?.code === code);
     if (sharpNote?.sharp) {
-      setActiveNotes((prev) => prev.filter((n) => n !== sharpNote.sharp!.note));
+      removeNote(sharpNote.sharp.note);
       event.preventDefault();
     }
   };
@@ -55,7 +65,7 @@ const Piano = ({ octave }: PianoProps) => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, []); // навешиваем только один раз
+  }, []);
 
   return (
     <div className={styles.pianoWrapper}>
@@ -64,35 +74,19 @@ const Piano = ({ octave }: PianoProps) => {
           <Key
             note={note}
             keyChar={label}
-            octave={octave}
             isSharp={false}
             active={activeNotes.includes(note)}
-            onMouseDown={() =>
-              setActiveNotes((prev) =>
-                prev.includes(note) ? prev : [...prev, note]
-              )
-            }
-            onMouseUp={() =>
-              setActiveNotes((prev) => prev.filter((n) => n !== note))
-            }
+            onMouseDown={() => addNote(note)}
+            onMouseUp={() => removeNote(note)}
           />
           {sharp && (
             <Key
               note={sharp.note}
               keyChar={sharp.label}
-              octave={octave}
               isSharp={true}
               active={activeNotes.includes(sharp.note)}
-              onMouseDown={() =>
-                setActiveNotes((prev) =>
-                  prev.includes(sharp.note) ? prev : [...prev, sharp.note]
-                )
-              }
-              onMouseUp={() =>
-                setActiveNotes((prev) =>
-                  prev.filter((n) => n !== sharp.note)
-                )
-              }
+              onMouseDown={() => addNote(sharp.note)}
+              onMouseUp={() => removeNote(sharp.note)}
             />
           )}
         </div>
