@@ -8,6 +8,7 @@ interface KeyProps {
   active?: boolean;
   onMouseDown?: () => void;
   onMouseUp?: () => void;
+  onMouseEnter?: () => void;
 }
 
 const Key = ({
@@ -17,7 +18,9 @@ const Key = ({
   active = false,
   onMouseDown,
   onMouseUp,
+  onMouseEnter,
 }: KeyProps) => {
+  // Функция для воспроизведения звука ноты
   const handlePlay = () => {
     playNote(note);
   };
@@ -27,23 +30,36 @@ const Key = ({
       className={`${styles.key} ${isSharp ? styles.sharp : styles.natural} ${
         active ? styles.active : ""
       }`}
+      // Воспроизводим звук при клике по клавише мышью
       onClick={handlePlay}
+      // При нажатии мыши вызываем коллбэк onMouseDown (если передан)
+      // и сразу воспроизводим звук
       onMouseDown={() => {
         onMouseDown?.();
         handlePlay();
       }}
+      // При отпускании мыши вызываем коллбэк onMouseUp (если есть)
       onMouseUp={onMouseUp}
+      // При наведении мыши вызываем коллбэк onMouseEnter (если есть)
+      onMouseEnter={() => {
+        onMouseEnter?.();
+        // Обычно не воспроизводим звук здесь, чтобы избежать лишних срабатываний
+      }}
+      // Атрибуты для доступности: кнопка и возможность фокусировки
       role="button"
       tabIndex={0}
+      // Обрабатываем клавиши Enter и пробел для воспроизведения звука с клавиатуры
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           handlePlay();
-          e.preventDefault();
+          e.preventDefault(); // предотвращаем скролл страницы при пробеле
         }
       }}
     >
       <span className={styles.label}>
+        {/* Отображаем название ноты заглавными буквами */}
         <p className={styles.not}>{note.toUpperCase()}</p>
+        {/* Отображаем символ клавиши, который соответствует клавиатуре */}
         <p className={styles.keyChar}>{keyChar}</p>
       </span>
     </div>
