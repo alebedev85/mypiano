@@ -10,7 +10,7 @@ export const playNote = (note: string) => {
   
   if (!soundCache.has(flatNote)) {
     const sound = new Howl({
-      src: [`/sounds/${flatNote}.mp3`],
+      src: [`sounds/grand_piano/${flatNote}.mp3`],
       volume: 1.0,
     });
     soundCache.set(flatNote, sound);

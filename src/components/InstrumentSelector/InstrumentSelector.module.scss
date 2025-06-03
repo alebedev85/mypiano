@@ -1,0 +1,47 @@
+@use '../../styles/vars' as *;
+
+.selector {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 24px;
+}
+
+.selectorButton {
+  padding: 8px 12px;
+  font-size: 14px;
+  // background: #222;
+  // color: #fff;
+  border: 1px solid black;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  width: 180px;
+  z-index: 10;
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0 0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.option {
+  padding: 8px 12px;
+  cursor: pointer;
+  &:hover {
+    background: #f0f0f0;
+  }
+}
+
+.active {
+  padding: 8px 12px;
+  font-weight: bold;
+  background: #ddd;
+  cursor: default;
+}
