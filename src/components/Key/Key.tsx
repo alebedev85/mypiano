@@ -1,4 +1,3 @@
-import { playNote } from "../../utils/soundManager";
 import styles from "./Key.module.scss";
 
 interface KeyProps {
@@ -20,23 +19,16 @@ const Key = ({
   onMouseUp,
   onMouseEnter,
 }: KeyProps) => {
-  // Функция для воспроизведения звука ноты
-  const handlePlay = () => {
-    playNote(note);
-  };
 
   return (
     <div
       className={`${styles.key} ${isSharp ? styles.sharp : styles.natural} ${
         active ? styles.active : ""
       }`}
-      // Воспроизводим звук при клике по клавише мышью
-      onClick={handlePlay}
       // При нажатии мыши вызываем коллбэк onMouseDown (если передан)
       // и сразу воспроизводим звук
       onMouseDown={() => {
         onMouseDown?.();
-        handlePlay();
       }}
       // При отпускании мыши вызываем коллбэк onMouseUp (если есть)
       onMouseUp={onMouseUp}
@@ -51,7 +43,6 @@ const Key = ({
       // Обрабатываем клавиши Enter и пробел для воспроизведения звука с клавиатуры
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
-          handlePlay();
           e.preventDefault(); // предотвращаем скролл страницы при пробеле
         }
       }}
