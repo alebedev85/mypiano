@@ -1,10 +1,12 @@
-export const instruments = [
-  "brass_section",
-  "celesta",
-  "church_organ",
-  "clavinet",
-  "grand_piano",
-  "guitar_nylon",
-  "guitar_steel",
-  "rock_organ",
+import type { Instrument } from "../types";
+
+export const instruments: Instrument[] = [
+  {name:"Grand Piano", src:"grand_piano"},
+  {name:"Church Organ", src:"church_organ"},
+  {name:"Rock Organ", src:"rock_organ"},
+  {name:"Clavinet", src:"clavinet"},
+  {name:"Celesta", src:"celesta"},
+  {name:"Guitar Nylon", src:"guitar_nylon"},
+  {name:"Guitar Steel", src:"guitar_steel"},
+  {name:"Brass Section", src:"brass_section"},
 ];

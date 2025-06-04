@@ -14,7 +14,7 @@ import type { RootState } from "../store";
  */
 export const usePianoControls = () => {
   // Получаем массив активных нот из Redux-хранилища
-  const activeNotes = useSelector((state: RootState) => state.piano.activeNotes);
+  const {activeNotes, currentInstrument} = useSelector((state: RootState) => state.piano);
 
   // Получаем функцию для отправки действий в Redux
   const dispatch = useDispatch();
@@ -52,7 +52,7 @@ export const usePianoControls = () => {
 
       if (noteToPlay && !activeNotesRef.current.includes(noteToPlay)) {
         dispatch(addNote(noteToPlay));   // Обновляем Redux-состояние
-        playNote(noteToPlay);            // Проигрываем звук
+        playNote(noteToPlay, currentInstrument.src);// Проигрываем звук
       }
     };
 
@@ -80,7 +80,7 @@ export const usePianoControls = () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, []);
+  }, [currentInstrument.name]);
 
   /**
    * Эффект: глобальный обработчик отпускания кнопки мыши (mouseup)

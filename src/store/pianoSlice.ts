@@ -1,14 +1,15 @@
 import { createSlice} from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+import type { Instrument } from "../types";
 
 interface PianoState {
   activeNotes: string[];
-  currentInstrument: string;
+  currentInstrument: Instrument;
 }
 
 const initialState: PianoState = {
   activeNotes: [],
-  currentInstrument: "grand_piano",
+  currentInstrument: {name:"Grand Piano", src:"grand_piano"},
 };
 
 const pianoSlice = createSlice({
@@ -26,7 +27,7 @@ const pianoSlice = createSlice({
     clearNotes(state) {
       state.activeNotes = [];
     },
-    setInstrument(state, action: PayloadAction<string>) {
+    setInstrument(state, action: PayloadAction<Instrument>) {
       state.currentInstrument = action.payload;
     },
   },
