@@ -1,31 +1,81 @@
-import { Howl } from "howler";
-import { sharpToFlat } from "./keyMappings";
+import * as Tone from "tone";
+import type { Instrument } from "../types";
+import { instruments } from "./instruments";
 
-// Кэш звуков по инструменту и ноте
-const soundCache = new Map<string, Howl>();
+// Хранилище Sampler'ов по имени инструмента
+export const samplers: Record<string, Tone.Sampler> = {};
 
-export const playNote = (note: string, instrument: string) => {
-  if (!note) return;
+// Хранилище активных нот (для их остановки)
+export const activeNotesMap: Record<string, Set<string>> = {};
 
-  console.log(note, instrument);
+/**
+ * Загружает все Sampler'ы и ожидает завершения загрузки буферов
+ */
+export const loadAllSamplers = async () => {
+  instruments.forEach((instrument: Instrument) => {
+    const sampler = new Tone.Sampler({
+      urls: {
+        C4: "C4.mp3",
+      },
+      baseUrl: `/sounds/${instrument.src}/`,
+      release: 1,
+    }).toDestination();
 
-  const flatNote = sharpToFlat(note);
-  const cacheKey = `${instrument}/${flatNote}`;
-    console.log('cacheKey: ',cacheKey);
+    samplers[instrument.name] = sampler;
+    activeNotesMap[instrument.name] = new Set();
+  });
 
+  // Ожидаем, пока все буферы загрузятся
+  await Tone.loaded();
+};
 
-  // Если звука нет в кэше — создаём и добавляем
-  if (!soundCache.has(cacheKey)) {
-    console.log('Howl');
+/**
+ * Проигрывает ноту на выбранном инструменте
+ * @param note Название ноты (например, "C4")
+ * @param instrumentName Название выбранного инструмента
+ */
+export const playNote = (note: string, instrumentName: string) => {
 
-    const sound = new Howl({
-      src: [`sounds/${instrument}/${flatNote}.mp3`],
-      volume: 1.0,
-    });
-    soundCache.set(cacheKey, sound);
+  const sampler = samplers[instrumentName];
+  if (!sampler) {
+    console.warn(`Sampler for instrument ${instrumentName} not found`);
+    return;
   }
 
-  // Воспроизводим звук (даже если он уже проигрывается)
-  const sound = soundCache.get(cacheKey)!;
-  sound.play();
+  // Запуск ноты
+  sampler.triggerAttack(note);
+  activeNotesMap[instrumentName].add(note);
+};
+
+/**
+ * Останавливает ноту (например, при отпускании клавиши)
+ * @param note Название ноты
+ * @param instrumentName Название выбранного инструмента
+ */
+export const stopNote = (note: string, instrumentName: string) => {
+  const sampler = samplers[instrumentName];
+  if (!sampler) {
+    console.warn(`Sampler for instrument ${instrumentName} not found`);
+    return;
+  }
+
+  // Остановка ноты
+  sampler.triggerRelease(note);
+  activeNotesMap[instrumentName].delete(note);
+};
+
+/**
+ * Останавливает все активные ноты у инструмента
+ * @param instrumentName Название выбранного инструмента
+ */
+export const stopAllNotes = (instrumentName: string) => {
+  const sampler = samplers[instrumentName];
+  if (!sampler) return;
+
+  const activeNotes = activeNotesMap[instrumentName];
+  activeNotes.forEach((note) => {
+    sampler.triggerRelease(note);
+  });
+
+  activeNotes.clear();
 };

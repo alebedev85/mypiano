@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import type { RootState } from "../store";
 import { addNote, clearNotes, removeNote } from "../store/pianoSlice";
 import { keyMapping } from "../utils/keyMappings";
-import { playNote } from "../utils/soundManager";
-import type { RootState } from "../store";
+import { playNote, stopNote } from "../utils/soundManager";
 
 /**
  * Кастомный хук для управления логикой взаимодействия с клавишами пианино
@@ -14,7 +14,9 @@ import type { RootState } from "../store";
  */
 export const usePianoControls = () => {
   // Получаем массив активных нот из Redux-хранилища
-  const {activeNotes, currentInstrument} = useSelector((state: RootState) => state.piano);
+  const { activeNotes, currentInstrument } = useSelector(
+    (state: RootState) => state.piano
+  );
 
   // Получаем функцию для отправки действий в Redux
   const dispatch = useDispatch();
@@ -39,7 +41,7 @@ export const usePianoControls = () => {
    * для взаимодействия с пианино через физическую клавиатуру
    */
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = async (event: KeyboardEvent) => {
       const code = event.code;
 
       // Ищем ноту (обычную или диезную) по коду клавиши
@@ -51,8 +53,8 @@ export const usePianoControls = () => {
       const noteToPlay = match?.code === code ? match.note : match?.sharp?.note;
 
       if (noteToPlay && !activeNotesRef.current.includes(noteToPlay)) {
-        dispatch(addNote(noteToPlay));   // Обновляем Redux-состояние
-        playNote(noteToPlay, currentInstrument.src);// Проигрываем звук
+        dispatch(addNote(noteToPlay)); // Обновляем Redux-состояние
+        await playNote(noteToPlay, currentInstrument.name); // Проигрываем звук
       }
     };
 
@@ -64,20 +66,27 @@ export const usePianoControls = () => {
         (k) => k.code === code || k.sharp?.code === code
       );
 
-      const noteToRemove = match?.code === code ? match.note : match?.sharp?.note;
+      const noteToRemove =
+        match?.code === code ? match.note : match?.sharp?.note;
 
       if (noteToRemove) {
         dispatch(removeNote(noteToRemove)); // Убираем ноту из активных
+        stopNote(noteToRemove, currentInstrument.name); // остановка звука
       }
     };
 
+    const down = (event: KeyboardEvent) => {
+      // запускаем асинхронно
+      handleKeyDown(event);
+    };
+
     // Подписка на глобальные события клавиатуры
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", down);
     window.addEventListener("keyup", handleKeyUp);
 
     // Очистка слушателей при размонтировании
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", handleKeyUp);
     };
   }, [currentInstrument.name]);
@@ -89,8 +98,8 @@ export const usePianoControls = () => {
    */
   useEffect(() => {
     const handleMouseUp = () => {
-      isMouseDownRef.current = false;  // Снимаем флаг зажатия мыши
-      dispatch(clearNotes());          // Убираем все активные ноты
+      isMouseDownRef.current = false; // Снимаем флаг зажатия мыши
+      dispatch(clearNotes()); // Убираем все активные ноты
     };
 
     window.addEventListener("mouseup", handleMouseUp);
@@ -101,8 +110,8 @@ export const usePianoControls = () => {
 
   // Возвращаем наружу нужные значения и рефы для использования в компоненте Piano
   return {
-    activeNotes,       // Текущее состояние активных нот (для подсветки клавиш)
-    isMouseDownRef,    // Реф, отслеживающий зажатие кнопки мыши (для drag-игры)
-    dispatch,          // Redux dispatch, используемый в событиях мыши
+    activeNotes, // Текущее состояние активных нот (для подсветки клавиш)
+    isMouseDownRef, // Реф, отслеживающий зажатие кнопки мыши (для drag-игры)
+    dispatch, // Redux dispatch, используемый в событиях мыши
   };
 };
