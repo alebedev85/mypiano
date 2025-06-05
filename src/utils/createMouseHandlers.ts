@@ -1,7 +1,7 @@
 import type { AppDispatch } from "../store";
 import { addNote, removeNote } from "../store/pianoSlice";
 import type { Instrument } from "../types";
-import { playNote, stopNote } from "./soundManager";
+import { playNote, stopNote, stopAllNotes } from "./soundManager";
 
 /**
  * Возвращает готовые обработчики событий мыши для клавиши пианино.
@@ -33,7 +33,7 @@ export const createMouseHandlers = (
 
   onMouseUp: () => {
     dispatch(removeNote(note));
-    stopNote(note, instrument.name);
+    stopAllNotes(instrument.name);
   },
 
   onMouseLeave: () => {
