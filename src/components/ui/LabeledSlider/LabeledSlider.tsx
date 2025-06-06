@@ -10,14 +10,26 @@ type Props = {
   onChange: (value: number) => void;
 };
 
-const LabeledSlider = ({ label, id, min, max, step = 1, value, onChange }: Props) => {
+const LabeledSlider = ({
+  label,
+  id,
+  min,
+  max,
+  step = 1,
+  value,
+  onChange,
+}: Props) => {
+  const percent = ((value - min) / (max - min)) * 100;
+  const background = `linear-gradient(to right, #c5c5c5 ${percent}%, #545454 ${percent}%)`;
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(parseFloat(e.target.value));
   };
 
   return (
     <div className={styles.sliderContainer}>
-      <label className={styles.label} htmlFor={id}>{label}</label>
+      <label className={styles.label} htmlFor={id}>
+        {label}
+      </label>
       <input
         id={id}
         className={styles.slider}
@@ -27,6 +39,7 @@ const LabeledSlider = ({ label, id, min, max, step = 1, value, onChange }: Props
         step={step}
         value={value}
         onChange={handleInput}
+        style={{ background }}
       />
     </div>
   );
