@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import InstrumentSelector from "../InstrumentSelector/InstrumentSelector";
 import LabeledSlider from "../ui/LabeledSlider/LabeledSlider";
 import styles from "./PianoControls.module.scss";
+import type { RootState } from "../../store";
+import { setEcho, setVolume } from "../../store/pianoSlice";
 
 const PianoControls = () => {
-  const [volume, setVolumeState] = useState(50);
-  const [echo, setEchoState] = useState(0);
+  const dispatch = useDispatch();
+  const {volume, echo}= useSelector((state: RootState) => state.piano);
   return (
     <div className={styles.controls}>
       <InstrumentSelector />
@@ -13,12 +15,10 @@ const PianoControls = () => {
         label="Громкость"
         id="volume"
         min={0}
-        max={100}
+        max={3}
+        step={0.1}
         value={volume}
-        onChange={(v) => {
-          setVolumeState(v);
-          // setVolume(v / 100);
-        }}
+        onChange={(val) => dispatch(setVolume(val))}
       />
       <LabeledSlider
         label="Эхо"
@@ -27,10 +27,7 @@ const PianoControls = () => {
         max={1}
         step={0.01}
         value={echo}
-        onChange={(v) => {
-          setEchoState(v);
-          // setEchoLevel(v);
-        }}
+        onChange={(val) => dispatch(setEcho(val))}
       />
     </div>
   );

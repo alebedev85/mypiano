@@ -1,4 +1,5 @@
 import * as Tone from "tone";
+import { store } from "../store";
 import type { Instrument } from "../types";
 import { instruments } from "./instruments";
 
@@ -7,6 +8,16 @@ export const samplers: Record<string, Tone.Sampler> = {};
 
 // Хранилище активных нот (для их остановки)
 export const activeNotesMap: Record<string, Set<string>> = {};
+
+// Глобальный эффект эха (feedback delay)
+const echoNode = new Tone.FeedbackDelay({
+  delayTime: 0.25,
+  feedback: 0.4,
+  wet: 0,
+}).toDestination();
+
+// Глобальный контрол громкости
+const volumeGain = new Tone.Gain(0.5).connect(echoNode); // по умолчанию 50%
 
 /**
  * Загружает все Sampler'ы и ожидает завершения загрузки буферов
@@ -19,7 +30,7 @@ export const loadAllSamplers = async () => {
       },
       baseUrl: `/sounds/${instrument.src}/`,
       release: 1,
-    }).toDestination();
+    }).connect(volumeGain);
 
     samplers[instrument.name] = sampler;
     activeNotesMap[instrument.name] = new Set();
@@ -34,15 +45,19 @@ export const loadAllSamplers = async () => {
  * @param note Название ноты (например, "C4")
  * @param instrumentName Название выбранного инструмента
  */
-export const playNote = (note: string, instrumentName: string) => {
-
+export const playNote = async (note: string, instrumentName: string) => {
   const sampler = samplers[instrumentName];
   if (!sampler) {
     console.warn(`Sampler for instrument ${instrumentName} not found`);
     return;
   }
 
-  // Запуск ноты
+  // ⬅️ ДОПОЛНЕНО: Получаем громкость и эффект эха из Redux
+  const state = store.getState().piano;
+  volumeGain.gain.value = state.volume;
+  echoNode.wet.value = state.echo;
+
+  await Tone.start(); // ⬅️ ДОПОЛНЕНО: активируем аудиоконтекст
   sampler.triggerAttack(note);
   activeNotesMap[instrumentName].add(note);
 };
