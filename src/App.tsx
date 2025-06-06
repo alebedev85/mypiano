@@ -1,6 +1,6 @@
 import styles from "./App.module.scss";
-import InstrumentSelector from "./components/InstrumentSelector/InstrumentSelector";
 import Piano from "./components/Piano/Piano";
+import PianoControls from "./components/PianoControls/PianoControls";
 import { useFirstInteraction } from "./hooks/useFirstInteraction";
 
 const App = () => {
@@ -9,9 +9,9 @@ const App = () => {
   return (
     <div className={styles.app}>
       <h1 className={styles.title}>🎹Виртуальное пианино</h1>
-      <InstrumentSelector />
       {isReady ? (
         <div className={styles.pianoContainer}>
+          <PianoControls />
           <Piano />
         </div>
       ) : (

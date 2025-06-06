@@ -1,0 +1,68 @@
+.sliderContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+/* Стили для текста над слайдером */
+.label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Общие стили самого слайдера */
+.slider {
+  -webkit-appearance: none; /* Убираем стандартный стиль в WebKit-браузерах */
+  width: 100%;
+  height: 6px; /* Толщина полоски слайдера */
+  background: #888; /* Цвет полоски */
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  /* Изменение цвета полоски при наведении */
+
+  /* Стили для "ручки" (thumb) в Chrome/Safari */
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Убираем стандартный стиль */
+    appearance: none;
+    width: 18px; /* Ширина ручки */
+    height: 18px; /* Высота ручки */
+    background: #eeeeee; /* Цвет ручки */
+    border: 2px solid #ccc; /* Обводка */
+    border-radius: 50%; /* Круглая форма */
+    cursor: pointer;
+    transition: opacity 0.2s;
+    &:hover {
+      background: #fff; 
+    }
+  }
+
+  /* Поведение при наведении на ручку (thumb) в Chrome/Safari */
+  &::-webkit-slider-thumb:hover {
+    opacity: 1;
+  }
+
+  /* Стили для "ручки" в Firefox */
+  &::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #eeeeee;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    &:hover {
+      background: #fff; 
+    }
+  }
+
+  /* Стили для полоски в Firefox */
+  &::-moz-range-track {
+    height: 6px;
+    background: #888;
+    border-radius: 3px;
+  }
+}
