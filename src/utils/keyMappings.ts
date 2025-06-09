@@ -20,7 +20,7 @@ export const keyMapping: KeyMapping[] = [
   { note: "E4", code: "KeyB", label: "B", sharp: null },
   { note: "F4", code: "KeyN", label: "N", sharp: { note: "F#4", code: "KeyJ", label: "J" } },
   { note: "G4", code: "KeyM", label: "M", sharp: { note: "G#4", code: "KeyK", label: "K" } },
-  { note: "A4", code: "Comma", label: ",", sharp: { note: "A#4", code: "Semicolon", label: ";" } },
+  { note: "A4", code: "Comma", label: ",", sharp: { note: "A#4", code: "KeyL", label: "l" } },
   { note: "B4", code: "Period", label: ".", sharp: null },
   { note: "C5", code: "Slash", label: "/", sharp: null },
 ];

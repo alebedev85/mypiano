@@ -10,14 +10,14 @@ export const samplers: Record<string, Tone.Sampler> = {};
 export const activeNotesMap: Record<string, Set<string>> = {};
 
 // Глобальный эффект эха (feedback delay)
-const echoNode = new Tone.FeedbackDelay({
-  delayTime: 0.25,
-  feedback: 0.4,
-  wet: 0,
+const reverbNode = new Tone.Reverb({
+  decay: 2,     // Время затухания (в секундах)
+  preDelay: 0.01, // Задержка перед началом реверберации
+  wet: 0,       // Степень применения эффекта (0 — сухой, 1 — полностью с эффектом)
 }).toDestination();
 
 // Глобальный контрол громкости
-const volumeGain = new Tone.Gain(0.5).connect(echoNode); // по умолчанию 50%
+const volumeGain = new Tone.Gain(0.5).connect(reverbNode); // по умолчанию 50%
 
 /**
  * Загружает все Sampler'ы и ожидает завершения загрузки буферов
@@ -55,7 +55,7 @@ export const playNote = async (note: string, instrumentName: string) => {
   //Получаем громкость и эффект эха из Redux
   const state = store.getState().piano;
   volumeGain.gain.value = state.volume;
-  echoNode.wet.value = state.echo;
+  reverbNode.wet.value = state.echo;
 
   await Tone.start(); //активируем аудиоконтекст
   sampler.triggerAttack(note);
