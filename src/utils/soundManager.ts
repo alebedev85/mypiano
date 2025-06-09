@@ -28,7 +28,7 @@ export const loadAllSamplers = async () => {
       urls: {
         C4: "C4.mp3",
       },
-      baseUrl: `/sounds/${instrument.src}/`,
+      baseUrl: `${import.meta.env.BASE_URL}sounds/${instrument.src}/`,
       release: 1,
     }).connect(volumeGain);
 
@@ -52,12 +52,12 @@ export const playNote = async (note: string, instrumentName: string) => {
     return;
   }
 
-  // ⬅️ ДОПОЛНЕНО: Получаем громкость и эффект эха из Redux
+  //Получаем громкость и эффект эха из Redux
   const state = store.getState().piano;
   volumeGain.gain.value = state.volume;
   echoNode.wet.value = state.echo;
 
-  await Tone.start(); // ⬅️ ДОПОЛНЕНО: активируем аудиоконтекст
+  await Tone.start(); //активируем аудиоконтекст
   sampler.triggerAttack(note);
   activeNotesMap[instrumentName].add(note);
 };
