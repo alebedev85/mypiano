@@ -1,8 +1,9 @@
 @use '../../styles/vars' as *;
 
 .controls{
+  margin: 16px 0;
   display: flex;
   width: 100%;
   justify-content: space-evenly;
-  align-items: flex-start
+  align-items: flex-end;
 }

@@ -9,3 +9,10 @@ export type Instrument = {
   name: string;
   src: string;
 }
+
+export type VisualNote = {
+  id: string;
+  note: string;
+  startTime: number;
+  endTime?: number;
+};

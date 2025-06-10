@@ -1,0 +1,49 @@
+.noteRoll {
+  position: relative;
+  height: 500px;
+  background-color: #121212; // тёмный фон
+  border: 1px solid #444;
+  overflow: hidden;
+}
+.verticalLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+.notesContainer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.note {
+  position: absolute;
+  background-color: #00ffff;
+  border-radius: 2px;
+  opacity: 0.8;
+}
+
+.gridOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.horizontalLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 10px;
+  color: #888;
+  padding-left: 4px;
+}

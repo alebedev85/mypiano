@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { v4 as uuid } from "uuid";
 import type { RootState } from "../store";
+import { addVisualNote, stopVisualNote } from "../store/noteRollSlice";
 import { addNote, clearNotes, removeNote } from "../store/pianoSlice";
 import { keyMapping } from "../utils/keyMappings";
 import { playNote, stopNote } from "../utils/soundManager";
@@ -13,6 +15,9 @@ import { playNote, stopNote } from "../utils/soundManager";
  * - глобальные слушатели событий
  */
 export const usePianoControls = () => {
+  //Добавь useRef<Map<string, string>>() — чтобы сопоставлять ноты и их уникальные ID
+  const noteIdMapRef = useRef<Map<string, string>>(new Map());
+
   // Получаем массив активных нот из Redux-хранилища
   const { activeNotes, currentInstrument } = useSelector(
     (state: RootState) => state.piano
@@ -53,8 +58,19 @@ export const usePianoControls = () => {
       const noteToPlay = match?.code === code ? match.note : match?.sharp?.note;
 
       if (noteToPlay && !activeNotesRef.current.includes(noteToPlay)) {
-        dispatch(addNote(noteToPlay)); // Обновляем Redux-состояние
-        await playNote(noteToPlay, currentInstrument.name); // Проигрываем звук
+        const noteId = uuid();
+        noteIdMapRef.current.set(noteToPlay, noteId);
+
+        dispatch(addNote(noteToPlay));
+        dispatch(
+          addVisualNote({
+            id: noteId,
+            note: noteToPlay,
+            startTime: performance.now(),
+          })
+        );
+
+        await playNote(noteToPlay, currentInstrument.name);
       }
     };
 
@@ -70,8 +86,14 @@ export const usePianoControls = () => {
         match?.code === code ? match.note : match?.sharp?.note;
 
       if (noteToRemove) {
-        dispatch(removeNote(noteToRemove)); // Убираем ноту из активных
-        stopNote(noteToRemove, currentInstrument.name); // остановка звука
+        dispatch(removeNote(noteToRemove));
+        stopNote(noteToRemove, currentInstrument.name);
+
+        const noteId = noteIdMapRef.current.get(noteToRemove);
+        if (noteId) {
+          dispatch(stopVisualNote({ id: noteId, endTime: performance.now() }));
+          noteIdMapRef.current.delete(noteToRemove);
+        }
       }
     };
 

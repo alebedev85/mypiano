@@ -1,7 +1,11 @@
+import { v4 as uuid } from "uuid";
 import type { AppDispatch } from "../store";
+import { addVisualNote, stopVisualNote } from "../store/noteRollSlice";
 import { addNote, removeNote } from "../store/pianoSlice";
 import type { Instrument } from "../types";
-import { playNote, stopNote, stopAllNotes } from "./soundManager";
+import { playNote, stopAllNotes, stopNote } from "./soundManager";
+
+const noteIdMap = new Map<string, string>();
 
 /**
  * Возвращает готовые обработчики событий мыши для клавиши пианино.
@@ -20,13 +24,33 @@ export const createMouseHandlers = (
 ) => ({
   onMouseDown: () => {
     isMouseDownRef.current = true;
+    const noteId = uuid();
+    noteIdMap.set(note, noteId);
+
     dispatch(addNote(note));
+    dispatch(
+      addVisualNote({
+        id: noteId,
+        note,
+        startTime: performance.now(),
+      })
+    );
     playNote(note, instrument.name);
   },
 
   onMouseEnter: () => {
-    if (isMouseDownRef.current) {
+    if (isMouseDownRef.current && !noteIdMap.has(note)) {
+      const noteId = uuid();
+      noteIdMap.set(note, noteId);
+
       dispatch(addNote(note));
+      dispatch(
+        addVisualNote({
+          id: noteId,
+          note,
+          startTime: performance.now(),
+        })
+      );
       playNote(note, instrument.name);
     }
   },
@@ -34,12 +58,24 @@ export const createMouseHandlers = (
   onMouseUp: () => {
     dispatch(removeNote(note));
     stopAllNotes(instrument.name);
+
+    const noteId = noteIdMap.get(note);
+    if (noteId) {
+      dispatch(stopVisualNote({ id: noteId, endTime: performance.now() }));
+      noteIdMap.delete(note);
+    }
   },
 
   onMouseLeave: () => {
     if (isMouseDownRef.current) {
       dispatch(removeNote(note));
       stopNote(note, instrument.name);
+
+      const noteId = noteIdMap.get(note);
+      if (noteId) {
+        dispatch(stopVisualNote({ id: noteId, endTime: performance.now() }));
+        noteIdMap.delete(note);
+      }
     }
-  }
+  },
 });
