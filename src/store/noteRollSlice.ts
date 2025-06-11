@@ -4,11 +4,15 @@ import type { VisualNote } from "../types/index";
 
 interface NoteRollState {
   notes: VisualNote[];
+  isRolling: boolean;
 }
 
 const initialState: NoteRollState = {
   notes: [],
+  isRolling: false,
 };
+
+const maxVisualTime = 5; // максимальное время в секундах, после которого удалять старые ноты
 
 const noteRollSlice = createSlice({
   name: "noteRoll",
@@ -16,6 +20,7 @@ const noteRollSlice = createSlice({
   reducers: {
     addVisualNote: (state, action: PayloadAction<VisualNote>) => {
       state.notes.push(action.payload);
+      state.isRolling = true;
     },
     stopVisualNote: (
       state,
@@ -29,10 +34,28 @@ const noteRollSlice = createSlice({
     clearNoteRoll: (state) => {
       state.notes = [];
     },
+    stopRoll: (state) => {
+      state.isRolling = false;
+      state.notes = []; // если нужно сбросить все ноты
+    },
+    removeOldNotes: (state, action: PayloadAction<number>) => {
+      const currentTime = action.payload;
+      const cutoffTime = currentTime - maxVisualTime * 1000;
+
+      state.notes = state.notes.filter((note) => {
+        const end = note.endTime ?? currentTime;
+        return end >= cutoffTime;
+      });
+    },
   },
 });
 
-export const { addVisualNote, stopVisualNote, clearNoteRoll } =
-  noteRollSlice.actions;
+export const {
+  addVisualNote,
+  stopVisualNote,
+  clearNoteRoll,
+  stopRoll,
+  removeOldNotes,
+} = noteRollSlice.actions;
 
 export default noteRollSlice.reducer;

@@ -1,107 +1,127 @@
-import { useEffect, useRef } from "react";
-import { useSelector } from "react-redux";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../store";
+import { removeOldNotes, stopRoll } from "../store/noteRollSlice";
+import { keyMapping } from "../utils/keyMappings";
 import styles from "./NoteRoll.module.scss";
 
-/**
- * Настройки для отображения визуальных нот
- */
-const pxPerSecond = 10; // сколько пикселей прокручивается за 1 секунду
-const keyWidth = 10; // ширина одной клавиши (и визуальной полоски)
-
-const lineOffsets: number[] = [];
-let x = 0;
-const pattern = [180, 240, 180];
-while (x < 2000) {
-  for (let i = 0; i < pattern.length && x < 2000; i++) {
-    x += pattern[i];
-    lineOffsets.push(x);
-  }
-}
+const pxPerSecond = 100; // Скорость движения нот (пикселей в секунду)
+const keyWidthWhite = 60; // Ширина белой клавиши пианино (в пикселях)
+const keyWidthBlack = 40; // Ширина черной клавиши пианино (в пикселях)
 
 const NoteRoll = () => {
-  const containerRef = useRef<HTMLDivElement | null>(null); // контейнер со всеми нотами
-  const animationRef = useRef<number | null>(null); // ID requestAnimationFrame
-  const startTimeRef = useRef(performance.now()); // момент запуска анимации
+  const dispatch = useDispatch();
 
-  // Получаем список визуальных нот из Redux
+  // Хук для хранения id текущего requestAnimationFrame
+  const animationRef = useRef<number | null>(null);
+
+  // Локальный стейт для текущего времени в миллисекундах,
+  // чтобы триггерить перерендер компонента для анимации нот
+  const [now, setNow] = useState<number>(performance.now());
+
+  // Получаем из Redux текущие визуальные ноты
   const visualNotes = useSelector((state: RootState) => state.noteRoll.notes);
 
-  // Эффект для запуска анимации прокрутки нот вверх
+  // Получаем состояние "идёт ли анимация"
+  const isRolling = useSelector((state: RootState) => state.noteRoll.isRolling);
+
+  // Основная функция анимации — вызывается в цикле requestAnimationFrame
+  const animate = () => {
+    const newNow = performance.now(); // Получаем текущее время с высокой точностью
+    setNow(newNow);                   // Обновляем локальный стейт, чтобы React перерисовал компонент
+
+    // Удаляем старые ноты из Redux — передаём текущее время
+    dispatch(removeOldNotes(newNow));
+
+    // Запрашиваем следующий кадр анимации
+    animationRef.current = requestAnimationFrame(animate);
+  };
+
+  // Хук для управления запуском и остановкой анимации
   useEffect(() => {
-    const animate = () => {
-      const now = performance.now();
-      const elapsed = (now - startTimeRef.current) / 1000; // прошедшее время в секундах
+    // Если анимация должна идти и она ещё не запущена — запускаем
+    if (isRolling && animationRef.current === null) {
+      animationRef.current = requestAnimationFrame(animate);
+    }
 
-      if (containerRef.current) {
-        // Сдвигаем контейнер вверх на elapsed * pxPerSecond
-        containerRef.current.style.transform = `translateY(-${
-          elapsed * pxPerSecond
-        }px)`;
-      }
+    // Если анимация должна остановиться — отменяем requestAnimationFrame
+    if (!isRolling && animationRef.current !== null) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
 
-      animationRef.current = requestAnimationFrame(animate); // след. кадр
-    };
+    // Если нот нет, но анимация всё ещё считается "идущей" — останавливаем анимацию
+    if (visualNotes.length === 0 && isRolling) {
+      dispatch(stopRoll());
+    }
 
-    animationRef.current = requestAnimationFrame(animate); // старт анимации
-
-    // Очистка анимации при размонтировании
+    // Очистка при размонтировании компонента
     return () => {
       if (animationRef.current !== null) {
         cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
       }
     };
-  }, []);
+  }, [isRolling, visualNotes]);
 
   return (
     <div className={styles.noteRoll}>
-      {/* Горизонтальная и вертикальная сетка */}
+      {/* Сетка с горизонтальными и вертикальными линиями */}
       <div className={styles.gridOverlay}>
         {[...Array(5)].map((_, i) => {
           const top = i * 100;
-          const label = 5 - i; // Счёт снизу вверх: 9s внизу → 0s вверху
+          const label = 5 - i;
           return (
             <div
               key={`row-${i}`}
               className={styles.horizontalLine}
-              style={{ top: `${top}px` }}
+              style={{ top }}
             >
               <span className={styles.timeLabel}>{label}s</span>
             </div>
           );
         })}
-        {/* Вертикальные линии с чередованием: 180, 240, 180, 240... */}
+
+        {/* Вертикальные линии с рассчитанными позициями */}
         {generateColumnOffsets([180, 240, 180, 240, 180, 240, 180]).map(
           (left, i) => (
             <div
               key={`col-${i}`}
               className={styles.verticalLine}
-              style={{ left: `${left}px` }}
+              style={{ left }}
             />
           )
         )}
       </div>
 
-      {/* Контейнер с полосками нот */}
-      <div className={styles.notesContainer} ref={containerRef}>
+      {/* Контейнер с нотами — они двигаются вверх с помощью изменения bottom */}
+      <div className={styles.notesContainer}>
         {visualNotes.map((note) => {
-          const startOffset = (note.startTime / 1000) * pxPerSecond;
-          const duration = note.endTime
-            ? (note.endTime - note.startTime) / 1000
-            : 0.2;
+          // Вычисляем, насколько нота поднялась вверх (в пикселях)
+          // Текущее смещение от нижнего края определяется разницей текущего времени и времени начала ноты
+          const startOffset =
+            ((now - note.startTime) / 1000) * pxPerSecond;
 
-          const heightPx = duration * pxPerSecond;
-          const noteIndex = noteToIndex(note.note);
+          // Аналогично вычисляем конец ноты (если есть)
+          const endOffset = note.endTime
+            ? ((now - note.endTime) / 1000) * pxPerSecond
+            : startOffset - 20; // Если нет endTime, ставим высоту по умолчанию
+
+          // Высота ноты — разница между позицией начала и конца
+          const height = startOffset - endOffset;
+
+          // Вычисляем горизонтальное смещение в зависимости от клавиши
+          const left = getNoteX(note.note);
 
           return (
             <div
               key={note.id}
               className={styles.note}
               style={{
-                left: noteIndex * keyWidth,
-                bottom: startOffset,
-                width: keyWidth - 2,
-                height: heightPx,
+                bottom: startOffset,  // Смещаем ноту вверх со временем
+                left,
+                width: getNoteWidth(note.note),
+                height,
               }}
             />
           );
@@ -111,48 +131,38 @@ const NoteRoll = () => {
   );
 };
 
-// Возвращает массив cumulative left-значений для вертикальных линий
-const generateColumnOffsets = (widths: number[]) => {
+export default NoteRoll;
+
+// --- Утилиты для вычисления позиции и размера нот
+
+// Вычисляет смещение слева для ноты в зависимости от раскладки клавиатуры
+function getNoteX(note: string): number {
+  let position = 0;
+  for (const key of keyMapping) {
+    if (key.note === note) return position;
+    position += keyWidthWhite;
+    if (key.sharp?.note === note)
+      return position - keyWidthWhite / 2 + keyWidthBlack / 2;
+  }
+  return 0;
+}
+
+// Возвращает ширину ноты: 40px для чёрных клавиш, 60px для белых
+function getNoteWidth(note: string): number {
+  for (const key of keyMapping) {
+    if (key.sharp?.note === note) return keyWidthBlack;
+    if (key.note === note) return keyWidthWhite;
+  }
+  return keyWidthWhite;
+}
+
+// Генерирует массив горизонтальных смещений колонок для сетки
+function generateColumnOffsets(widths: number[]): number[] {
   const offsets: number[] = [];
   let current = 0;
-
   for (const w of widths) {
     offsets.push(current);
     current += w;
   }
-
   return offsets;
-};
-
-/**
- * Преобразует ноту (например, "C4") в индекс клавиши,
- * чтобы позиционировать её по горизонтали
- */
-function noteToIndex(note: string): number {
-  const notesOrder = [
-    "C",
-    "C#",
-    "D",
-    "D#",
-    "E",
-    "F",
-    "F#",
-    "G",
-    "G#",
-    "A",
-    "A#",
-    "B",
-  ];
-
-  const match = note.match(/^([A-G]#?)(\d)$/);
-
-  if (!match) return 0;
-
-  const [, pitch, octaveStr] = match;
-  const octave = parseInt(octaveStr, 10);
-  const noteIndex = notesOrder.indexOf(pitch);
-
-  return octave * 12 + noteIndex;
 }
-
-export default NoteRoll;
