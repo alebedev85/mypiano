@@ -28,7 +28,7 @@ const NoteRoll = () => {
   // Основная функция анимации — вызывается в цикле requestAnimationFrame
   const animate = () => {
     const newNow = performance.now(); // Получаем текущее время с высокой точностью
-    setNow(newNow);                   // Обновляем локальный стейт, чтобы React перерисовал компонент
+    setNow(newNow); // Обновляем локальный стейт, чтобы React перерисовал компонент
 
     // Удаляем старые ноты из Redux — передаём текущее время
     dispatch(removeOldNotes(newNow));
@@ -97,34 +97,45 @@ const NoteRoll = () => {
       {/* Контейнер с нотами — они двигаются вверх с помощью изменения bottom */}
       <div className={styles.notesContainer}>
         {visualNotes.map((note) => {
-          // Вычисляем, насколько нота поднялась вверх (в пикселях)
-          // Текущее смещение от нижнего края определяется разницей текущего времени и времени начала ноты
-          const startOffset =
-            ((now - note.startTime) / 1000) * pxPerSecond;
+          // const now = performance.now();
 
-          // Аналогично вычисляем конец ноты (если есть)
-          const endOffset = note.endTime
-            ? ((now - note.endTime) / 1000) * pxPerSecond
-            : startOffset - 20; // Если нет endTime, ставим высоту по умолчанию
-
-          // Высота ноты — разница между позицией начала и конца
-          const height = startOffset - endOffset;
-
-          // Вычисляем горизонтальное смещение в зависимости от клавиши
-          const left = getNoteX(note.note);
-
-          return (
-            <div
-              key={note.id}
-              className={styles.note}
-              style={{
-                bottom: startOffset,  // Смещаем ноту вверх со временем
-                left,
-                width: getNoteWidth(note.note),
-                height,
-              }}
-            />
-          );
+          if (!note.endTime) {
+            // Клавиша зажата — нота растет, но не движется вверх
+            const height = ((now - note.startTime) / 1000) * pxPerSecond;
+            return (
+              <div
+                key={note.id}
+                className={styles.note}
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: getNoteX(note.note),
+                  width: getNoteWidth(note.note),
+                  height,
+                  transform: "translateY(0)",
+                }}
+              />
+            );
+          } else {
+            // Клавиша отпущена — нота фиксированной высоты, движется вверх
+            const height =
+              ((note.endTime - note.startTime) / 1000) * pxPerSecond;
+            const elapsed = (now - note.endTime) / 1000;
+            return (
+              <div
+                key={note.id}
+                className={styles.note}
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: getNoteX(note.note),
+                  width: getNoteWidth(note.note),
+                  height,
+                  transform: `translateY(-${elapsed * pxPerSecond}px)`,
+                }}
+              />
+            );
+          }
         })}
       </div>
     </div>
