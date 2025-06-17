@@ -2,7 +2,6 @@ import styles from "./App.module.scss";
 import Piano from "./components/Piano/Piano";
 import PianoControls from "./components/PianoControls/PianoControls";
 import { useFirstInteraction } from "./hooks/useFirstInteraction";
-// import NoteRoll from "./NoteRoll/NoteRoll";
 import { NoteRoll } from "./widgets/note-roll/ui/NoteRoll";
 
 const App = () => {
