@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { instruments } from "../../utils/instruments";
-import { setInstrument } from "../../store/pianoSlice";
-import styles from "./InstrumentSelector.module.scss";
+import { useDispatch, useSelector } from "react-redux";
+import { instruments } from "../../constants/instruments";
 import type { RootState } from "../../store";
+import { setInstrument } from "../../store/pianoSlice";
 import type { Instrument } from "../../types";
+import styles from "./InstrumentSelector.module.scss";
 
 const InstrumentSelector = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const currentInstrument = useSelector((state: RootState) => state.piano.currentInstrument);
+  const currentInstrument = useSelector(
+    (state: RootState) => state.piano.currentInstrument
+  );
   const dispatch = useDispatch();
 
   const selectorRef = useRef<HTMLDivElement>(null);
@@ -21,7 +23,10 @@ const InstrumentSelector = () => {
   // Закрытие при клике вне компонента
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (selectorRef.current && !selectorRef.current.contains(event.target as Node)) {
+      if (
+        selectorRef.current &&
+        !selectorRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -59,7 +64,9 @@ const InstrumentSelector = () => {
             <li
               key={inst.src}
               className={
-                inst.name === currentInstrument.name ? styles.active : styles.option
+                inst.name === currentInstrument.name
+                  ? styles.active
+                  : styles.option
               }
               onClick={() => handleSelect(inst)}
             >

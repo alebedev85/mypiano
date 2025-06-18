@@ -1,7 +1,7 @@
 import * as Tone from "tone";
+import { instruments } from "../constants/instruments";
 import { store } from "../store";
 import type { Instrument } from "../types";
-import { instruments } from "./instruments";
 
 // Хранилище Sampler'ов по имени инструмента
 export const samplers: Record<string, Tone.Sampler> = {};
@@ -11,9 +11,9 @@ export const activeNotesMap: Record<string, Set<string>> = {};
 
 // Глобальный эффект эха (feedback delay)
 const reverbNode = new Tone.Reverb({
-  decay: 2,     // Время затухания (в секундах)
+  decay: 2, // Время затухания (в секундах)
   preDelay: 0.01, // Задержка перед началом реверберации
-  wet: 0,       // Степень применения эффекта (0 — сухой, 1 — полностью с эффектом)
+  wet: 0, // Степень применения эффекта (0 — сухой, 1 — полностью с эффектом)
 }).toDestination();
 
 // Глобальный контрол громкости

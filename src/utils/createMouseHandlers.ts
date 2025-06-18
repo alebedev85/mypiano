@@ -1,20 +1,23 @@
-import { v4 as uuid } from "uuid";
-import type { AppDispatch } from "../store";
-import { addVisualNote, stopVisualNote } from "../store/noteRollSlice";
-import { addNote, removeNote } from "../store/pianoSlice";
-import type { Instrument } from "../types";
-import { playNote, stopAllNotes, stopNote } from "./soundManager";
+// src/utils/createMouseHandlers.ts
 
-const noteIdMap = new Map<string, string>();
+import type { AppDispatch } from "../store";
+import type { Instrument } from "../types";
+import { startNote, stopNoteLogic, stopAllNoteLogic } from "./noteHandlers";
 
 /**
- * Возвращает готовые обработчики событий мыши для клавиши пианино.
- * Поддерживает drag-перетаскивание и остановку воспроизведения при отпускании мыши.
- *
- * @param note - Нота, к которой относятся обработчики
- * @param instrument - Текущий инструмент
- * @param isMouseDownRef - ref, указывающий зажата ли кнопка мыши
+ * Фабрика обработчиков событий мыши для одной клавиши пианино.
+ * 
+ * Позволяет:
+ * - Начинать воспроизведение при нажатии (mousedown)
+ * - Поддерживать drag-over: при перемещении мыши с зажатой кнопкой активировать новые клавиши (mouseenter)
+ * - Останавливать воспроизведение при отпускании (mouseup)
+ * - Останавливать при уходе мыши с зажатой кнопкой (mouseleave)
+ * 
+ * @param note - Нота, к которой относится клавиша (например: "C4")
+ * @param instrument - Текущий выбранный инструмент
+ * @param isMouseDownRef - ref, отслеживающий зажата ли кнопка мыши (используется для drag-over)
  * @param dispatch - Redux dispatch
+ * @returns Объект с обработчиками событий
  */
 export const createMouseHandlers = (
   note: string,
@@ -22,60 +25,42 @@ export const createMouseHandlers = (
   isMouseDownRef: React.MutableRefObject<boolean>,
   dispatch: AppDispatch
 ) => ({
+
+  /**
+   * Пользователь нажал мышкой на клавишу
+   * Начинаем воспроизведение ноты
+   */
   onMouseDown: () => {
     isMouseDownRef.current = true;
-    const noteId = uuid();
-    noteIdMap.set(note, noteId);
-
-    dispatch(addNote(note));
-    dispatch(
-      addVisualNote({
-        id: noteId,
-        note,
-        startTime: performance.now(),
-      })
-    );
-    playNote(note, instrument.name);
+    startNote(note, instrument, dispatch);
   },
 
+  /**
+   * Пользователь двигает мышь по клавишам с зажатой кнопкой.
+   * Если клавиша ещё не была активна — активируем её.
+   */
   onMouseEnter: () => {
-    if (isMouseDownRef.current && !noteIdMap.has(note)) {
-      const noteId = uuid();
-      noteIdMap.set(note, noteId);
-
-      dispatch(addNote(note));
-      dispatch(
-        addVisualNote({
-          id: noteId,
-          note,
-          startTime: performance.now(),
-        })
-      );
-      playNote(note, instrument.name);
+    if (isMouseDownRef.current) {
+      startNote(note, instrument, dispatch);
     }
   },
 
+  /**
+   * Пользователь отпустил кнопку мыши на этой клавише.
+   * Останавливаем воспроизведение и визуализацию.
+   * Важно: используем полную остановку всех нот (гарантируем, что не останется "зависших" звуков)
+   */
   onMouseUp: () => {
-    dispatch(removeNote(note));
-    stopAllNotes(instrument.name);
-
-    const noteId = noteIdMap.get(note);
-    if (noteId) {
-      dispatch(stopVisualNote({ id: noteId, endTime: performance.now() }));
-      noteIdMap.delete(note);
-    }
+    stopAllNoteLogic(note, instrument, dispatch);
   },
 
+  /**
+   * Пользователь ушёл с клавиши во время зажатой кнопки мыши (drag + leave)
+   * Останавливаем только конкретную ноту, не все.
+   */
   onMouseLeave: () => {
     if (isMouseDownRef.current) {
-      dispatch(removeNote(note));
-      stopNote(note, instrument.name);
-
-      const noteId = noteIdMap.get(note);
-      if (noteId) {
-        dispatch(stopVisualNote({ id: noteId, endTime: performance.now() }));
-        noteIdMap.delete(note);
-      }
+      stopNoteLogic(note, instrument, dispatch);
     }
   },
 });

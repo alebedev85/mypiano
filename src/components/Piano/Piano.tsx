@@ -1,9 +1,7 @@
-// src/components/Piano/Piano.tsx
-
 import { useSelector } from "react-redux";
 import { usePianoControls } from "../../hooks/usePianoControls";
 import { createMouseHandlers } from "../../utils/createMouseHandlers";
-import { keyMapping } from "../../utils/keyMappings";
+import { keyMapping } from "../../constants/keyMappings";
 import Key from "../Key/Key";
 import styles from "./Piano.module.scss";
 import type { RootState } from "../../store";
